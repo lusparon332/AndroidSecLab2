@@ -36,6 +36,7 @@ import com.example.inventory.ui.AppViewModelProvider
 import com.example.inventory.ui.navigation.NavigationDestination
 import com.example.inventory.ui.theme.InventoryTheme
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
 
 object ItemEditDestination : NavigationDestination {
     override val route = "item_edit"
@@ -50,9 +51,10 @@ fun ItemEditScreen(
     navigateBack: () -> Unit,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ItemEditViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: ItemEditViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             InventoryTopAppBar(
@@ -71,9 +73,14 @@ fun ItemEditScreen(
                 // and the item may not be updated in the Database. This is because when config
                 // change occurs, the Activity will be recreated and the rememberCoroutineScope will
                 // be cancelled - since the scope is bound to composition.
-                coroutineScope.launch {
-                    viewModel.updateItem()
-                    navigateBack()
+                val validatedDetails = validateItemDetails(viewModel.itemUiState.itemDetails)
+                if (validatedDetails.errors == ItemErrors()) {
+                    coroutineScope.launch {
+                        viewModel.updateItem()
+                        navigateBack()
+                    }
+                } else {
+                    viewModel.updateUiState(validatedDetails)
                 }
             },
             modifier = Modifier

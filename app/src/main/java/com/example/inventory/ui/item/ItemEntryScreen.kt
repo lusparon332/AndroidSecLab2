@@ -149,6 +149,13 @@ fun ItemInputForm(
             enabled = enabled,
             singleLine = true
         )
+        if (itemDetails.errors.nameError != null) {
+            Text(
+                text = itemDetails.errors.nameError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
         OutlinedTextField(
             value = itemDetails.price,
             onValueChange = { onValueChange(itemDetails.copy(price = it)) },
@@ -164,6 +171,13 @@ fun ItemInputForm(
             enabled = enabled,
             singleLine = true
         )
+        if (itemDetails.errors.priceError != null) {
+            Text(
+                text = itemDetails.errors.priceError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
         OutlinedTextField(
             value = itemDetails.quantity,
             onValueChange = { onValueChange(itemDetails.copy(quantity = it)) },
@@ -178,6 +192,73 @@ fun ItemInputForm(
             enabled = enabled,
             singleLine = true
         )
+        if (itemDetails.errors.quantityError != null) {
+            Text(
+                text = itemDetails.errors.quantityError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        OutlinedTextField(
+            value = itemDetails.supplier,
+            onValueChange = { onValueChange(itemDetails.copy(supplier = it)) },
+            label = { Text(stringResource(R.string.item_supplier_req)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            singleLine = true
+        )
+        if (itemDetails.errors.supplierError != null) {
+            Text(
+                text = itemDetails.errors.supplierError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        OutlinedTextField(
+            value = itemDetails.email,
+            onValueChange = { onValueChange(itemDetails.copy(email = it)) },
+            label = { Text(stringResource(R.string.item_suppliers_email_req)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            singleLine = true
+        )
+        if (itemDetails.errors.emailError != null) {
+            Text(
+                text = itemDetails.errors.emailError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        OutlinedTextField(
+            value = itemDetails.phone,
+            onValueChange = { onValueChange(itemDetails.copy(phone = it)) },
+            label = { Text(stringResource(R.string.item_suppliers_phone_req)) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                unfocusedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            singleLine = true
+        )
+        if (itemDetails.errors.phoneError != null) {
+            Text(
+                text = itemDetails.errors.phoneError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
         if (enabled) {
             Text(
                 text = stringResource(R.string.required_fields),
@@ -197,4 +278,17 @@ private fun ItemEntryScreenPreview() {
             )
         ), onItemValueChange = {}, onSaveClick = {})
     }
+}
+
+fun validateItemDetails(details: ItemDetails): ItemDetails {
+    val errors = ItemErrors(
+        nameError = if (details.name.isBlank()) "Name cannot be empty" else null,
+        priceError = if (details.price.toDoubleOrNull() == null) "Invalid price" else null,
+        quantityError = if (details.quantity.toIntOrNull() == null) "Invalid quantity" else null,
+        supplierError = if (details.supplier.isBlank()) "Supplier cannot be empty" else null,
+        emailError = if (!android.util.Patterns.EMAIL_ADDRESS.matcher(details.email).matches())
+            "Invalid email" else null,
+        phoneError = if (details.phone.length != 11) "Invalid phone number" else null
+    )
+    return details.copy(errors = errors)
 }

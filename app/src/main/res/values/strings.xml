@@ -22,9 +22,19 @@
     <string name="no_item_description">Oops!\nNo items in the inventory.\nTap + to add.</string>
     <string name="edit_item_title">Edit Item</string>
     <string name="item">Item</string>
+
+    <string name="supplier">Supplier</string>
+    <string name="email">Supplier\'s Email</string>
+    <string name="phone">Supplier\'s Phone</string>
+
     <string name="item_detail_title">Item Details</string>
     <string name="item_entry_title">Add Item</string>
     <string name="item_name_req">Item Name*</string>
+
+    <string name="item_supplier_req">Item Supplier*</string>
+    <string name="item_suppliers_email_req">Item Supplier\'s Email*</string>
+    <string name="item_suppliers_phone_req">Item Supplier\'s Phone*</string>
+
     <string name="item_price_req">Item Price*</string>
     <string name="no">No</string>
     <string name="price">Price</string>
@@ -32,6 +42,7 @@
     <string name="in_stock">%d in stock</string>
     <string name="quantity_req">Quantity in Stock*</string>
     <string name="save_action">Save</string>
+    <string name="share_action">Share</string>
     <string name="sell">Sell</string>
     <string name="yes">Yes</string>
     <string name="required_fields">*required fields</string>

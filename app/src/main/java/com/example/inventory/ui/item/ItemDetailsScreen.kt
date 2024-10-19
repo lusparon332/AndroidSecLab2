@@ -16,6 +16,8 @@
 
 package com.example.inventory.ui.item
 
+import android.content.Context
+import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -140,6 +143,7 @@ private fun ItemDetailsBody(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
@@ -162,6 +166,13 @@ private fun ItemDetailsBody(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.delete))
+        }
+        Button(
+            onClick = { shareItemDetails(itemDetailsUiState.itemDetails.toItem(), context) },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small
+        ) {
+            Text(stringResource(R.string.share_action))
         }
         if (deleteConfirmationRequired) {
             DeleteConfirmationDialog(
@@ -223,6 +234,36 @@ fun ItemDetails(
                     )
                 )
             )
+            ItemDetailsRow(
+                labelResID = R.string.supplier,
+                itemDetail = item.supplier,
+                modifier = Modifier.padding(
+                    horizontal = dimensionResource(
+                        id = R.dimen
+                            .padding_medium
+                    )
+                )
+            )
+            ItemDetailsRow(
+                labelResID = R.string.email,
+                itemDetail = item.email,
+                modifier = Modifier.padding(
+                    horizontal = dimensionResource(
+                        id = R.dimen
+                            .padding_medium
+                    )
+                )
+            )
+            ItemDetailsRow(
+                labelResID = R.string.phone,
+                itemDetail = item.phone,
+                modifier = Modifier.padding(
+                    horizontal = dimensionResource(
+                        id = R.dimen
+                            .padding_medium
+                    )
+                )
+            )
         }
 
     }
@@ -264,7 +305,32 @@ private fun DeleteConfirmationDialog(
 fun ItemDetailsScreenPreview() {
     InventoryTheme {
         ItemDetailsBody(ItemDetailsUiState(
-            outOfStock = true, itemDetails = ItemDetails(1, "Pen", "$100", "10")
+            outOfStock = true, itemDetails = ItemDetails(1,
+                "Pen",
+                "$100",
+                "10",
+                "Erich Krause",
+                "office@erichkrause.com",
+                "74952343795")
         ), onSellItem = {}, onDelete = {})
     }
+}
+
+fun shareItemDetails(item: Item, context: Context) {
+    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, "Item Details: ${item.name}")
+        putExtra(
+            Intent.EXTRA_TEXT,
+            """
+            Name: ${item.name}
+            Quantity: ${item.quantity}
+            Price: ${item.formatedPrice()}
+            Supplier: ${item.supplier}
+            Supplier's Email: ${item.email}
+            Supplier's Phone: ${item.phone}
+            """.trimIndent()
+        )
+    }
+    context.startActivity(Intent.createChooser(shareIntent, "Share item via"))
 }

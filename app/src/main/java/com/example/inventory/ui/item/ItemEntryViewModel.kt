@@ -68,11 +68,26 @@ data class ItemUiState(
     val isEntryValid: Boolean = false
 )
 
+data class ItemErrors(
+    val nameError: String? = null,
+    val priceError: String? = null,
+    val quantityError: String? = null,
+    val supplierError: String? = null,
+    val emailError: String? = null,
+    val phoneError: String? = null
+)
+
 data class ItemDetails(
     val id: Int = 0,
     val name: String = "",
     val price: String = "",
     val quantity: String = "",
+
+    val supplier: String = "",
+    val email: String = "",
+    val phone: String = "",
+
+    val errors: ItemErrors = ItemErrors()
 )
 
 /**
@@ -84,7 +99,11 @@ fun ItemDetails.toItem(): Item = Item(
     id = id,
     name = name,
     price = price.toDoubleOrNull() ?: 0.0,
-    quantity = quantity.toIntOrNull() ?: 0
+    quantity = quantity.toIntOrNull() ?: 0,
+
+    supplier = supplier,
+    email = email,
+    phone = phone
 )
 
 fun Item.formatedPrice(): String {
@@ -106,5 +125,9 @@ fun Item.toItemDetails(): ItemDetails = ItemDetails(
     id = id,
     name = name,
     price = price.toString(),
-    quantity = quantity.toString()
+    quantity = quantity.toString(),
+
+    supplier = supplier,
+    email = email,
+    phone = phone
 )
