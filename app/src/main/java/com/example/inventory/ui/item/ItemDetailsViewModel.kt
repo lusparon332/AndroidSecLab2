@@ -16,10 +16,15 @@
 
 package com.example.inventory.ui.item
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.inventory.data.EncryptedRepository
 import com.example.inventory.data.ItemsRepository
+import com.example.inventory.data.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -36,6 +41,7 @@ class ItemDetailsViewModel(
 ) : ViewModel() {
 
     private val itemId: Int = checkNotNull(savedStateHandle[ItemDetailsDestination.itemIdArg])
+    private val repository = SettingsRepository()
 
     /**
      * Holds the item details ui state. The data is retrieved from [ItemsRepository] and mapped to
@@ -73,6 +79,37 @@ class ItemDetailsViewModel(
 
     companion object {
         private const val TIMEOUT_MILLIS = 5_000L
+    }
+
+    fun isNoData(): Boolean { return repository.isNoData() }
+
+    fun isNoShare(): Boolean { return repository.isNoShare() }
+
+    fun save(selectedUri: Uri) {
+        val encryptedRepository = EncryptedRepository(selectedUri)
+        encryptedRepository.WriteFile(uiState.value.itemDetails.toItem())
+    }
+
+    fun share(context: Context) {
+        val sendText =
+            """
+            Name: ${uiState.value.itemDetails.name}
+            Quantity: ${uiState.value.itemDetails.quantity}
+            Price: ${uiState.value.itemDetails.price}
+            Supplier: ${uiState.value.itemDetails.supplier}
+            Supplier's Email: ${uiState.value.itemDetails.email}
+            Supplier's Phone: ${uiState.value.itemDetails.phone}
+            Creation: ${uiState.value.itemDetails.creation}
+            """
+
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, sendText)
+            type = "text/plain"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        context.startActivity(shareIntent)
     }
 }
 

@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.inventory.data.Item
 import com.example.inventory.data.ItemsRepository
+import com.example.inventory.data.SettingsRepository
 import java.text.NumberFormat
 
 /**
@@ -35,6 +36,7 @@ class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewMod
     var itemUiState by mutableStateOf(ItemUiState())
         private set
 
+    private val repository = SettingsRepository()
     /**
      * Updates the [itemUiState] with the value provided in the argument. This method also triggers
      * a validation for input values.
@@ -49,7 +51,9 @@ class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewMod
      */
     suspend fun saveItem() {
         if (validateInput()) {
-            itemsRepository.insertItem(itemUiState.itemDetails.toItem())
+            val item = itemUiState.itemDetails.toItem()
+            item.creation = "manual"
+            itemsRepository.insertItem(item)
         }
     }
 
@@ -58,6 +62,10 @@ class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewMod
             name.isNotBlank() && price.isNotBlank() && quantity.isNotBlank()
         }
     }
+
+    fun isDefault(): Boolean { return repository.isDefault() }
+
+    fun default(): Int { return repository.default() }
 }
 
 /**
@@ -86,6 +94,7 @@ data class ItemDetails(
     val supplier: String = "",
     val email: String = "",
     val phone: String = "",
+    val creation: String = "",
 
     val errors: ItemErrors = ItemErrors()
 )
@@ -103,7 +112,8 @@ fun ItemDetails.toItem(): Item = Item(
 
     supplier = supplier,
     email = email,
-    phone = phone
+    phone = phone,
+    creation = creation
 )
 
 fun Item.formatedPrice(): String {
@@ -129,5 +139,7 @@ fun Item.toItemDetails(): ItemDetails = ItemDetails(
 
     supplier = supplier,
     email = email,
-    phone = phone
+    phone = phone,
+
+    creation = creation
 )

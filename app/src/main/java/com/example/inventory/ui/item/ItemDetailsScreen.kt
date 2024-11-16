@@ -16,8 +16,11 @@
 
 package com.example.inventory.ui.item
 
-import android.content.Context
-import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,6 +50,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,14 +63,12 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.inventory.InventoryTopAppBar
 import com.example.inventory.R
 import com.example.inventory.data.Item
 import com.example.inventory.ui.AppViewModelProvider
 import com.example.inventory.ui.navigation.NavigationDestination
-import com.example.inventory.ui.theme.InventoryTheme
 import kotlinx.coroutines.launch
 
 object ItemDetailsDestination : NavigationDestination {
@@ -86,6 +88,23 @@ fun ItemDetailsScreen(
 ) {
     val uiState = viewModel.uiState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain"))
+    { selectedUri ->
+        if (selectedUri != null) {
+            Log.d("selectedUri", ""+selectedUri)
+            viewModel.save(selectedUri)
+        } else {
+            Log.d("selectedUri", "No file was selected")
+        }
+    }
+    var write by rememberSaveable { mutableStateOf(false) }
+    if (write){
+        Write(launcher)
+        write = false
+    }
+
     Scaffold(
         topBar = {
             InventoryTopAppBar(
@@ -114,7 +133,9 @@ fun ItemDetailsScreen(
     ) { innerPadding ->
         ItemDetailsBody(
             itemDetailsUiState = uiState.value,
+            onShare = {viewModel.share(context)},
             onSellItem = { viewModel.reduceQuantityByOne() },
+            onSave = {write = true },
             onDelete = {
                 // Note: If the user rotates the screen very fast, the operation may get cancelled
                 // and the item may not be deleted from the Database. This is because when config
@@ -131,7 +152,8 @@ fun ItemDetailsScreen(
                     top = innerPadding.calculateTopPadding(),
                     end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
                 )
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            viewModel = viewModel
         )
     }
 }
@@ -139,24 +161,25 @@ fun ItemDetailsScreen(
 @Composable
 private fun ItemDetailsBody(
     itemDetailsUiState: ItemDetailsUiState,
+    onShare: () -> Unit,
     onSellItem: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ItemDetailsViewModel
 ) {
-    val context = LocalContext.current
     Column(
         modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
     ) {
         var deleteConfirmationRequired by rememberSaveable { mutableStateOf(false) }
         ItemDetails(
-            item = itemDetailsUiState.itemDetails.toItem(), modifier = Modifier.fillMaxWidth()
+            item = itemDetailsUiState.itemDetails.toItem(), modifier = Modifier.fillMaxWidth(), viewModel = viewModel
         )
         Button(
             onClick = onSellItem,
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small,
-            enabled = !itemDetailsUiState.outOfStock
         ) {
             Text(stringResource(R.string.sell))
         }
@@ -168,11 +191,19 @@ private fun ItemDetailsBody(
             Text(stringResource(R.string.delete))
         }
         Button(
-            onClick = { shareItemDetails(itemDetailsUiState.itemDetails.toItem(), context) },
+            onClick = onShare,
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.small,
+            enabled = !viewModel.isNoShare()
+        ) {
+            Text(stringResource(R.string.share_action))
+        }
+        Button(
+            onClick = onSave,
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.small
         ) {
-            Text(stringResource(R.string.share_action))
+            Text(stringResource(R.string.save))
         }
         if (deleteConfirmationRequired) {
             DeleteConfirmationDialog(
@@ -190,7 +221,7 @@ private fun ItemDetailsBody(
 
 @Composable
 fun ItemDetails(
-    item: Item, modifier: Modifier = Modifier
+    item: Item, modifier: Modifier = Modifier, viewModel: ItemDetailsViewModel
 ) {
     Card(
         modifier = modifier, colors = CardDefaults.cardColors(
@@ -236,7 +267,7 @@ fun ItemDetails(
             )
             ItemDetailsRow(
                 labelResID = R.string.supplier,
-                itemDetail = item.supplier,
+                itemDetail = if (viewModel.isNoData()) "НЕ ПОКАЖУ!" else item.supplier,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(
                         id = R.dimen
@@ -257,6 +288,16 @@ fun ItemDetails(
             ItemDetailsRow(
                 labelResID = R.string.phone,
                 itemDetail = item.phone,
+                modifier = Modifier.padding(
+                    horizontal = dimensionResource(
+                        id = R.dimen
+                            .padding_medium
+                    )
+                )
+            )
+            ItemDetailsRow(
+                labelResID = R.string.creation,
+                itemDetail = item.creation,
                 modifier = Modifier.padding(
                     horizontal = dimensionResource(
                         id = R.dimen
@@ -300,37 +341,9 @@ private fun DeleteConfirmationDialog(
         })
 }
 
-@Preview(showBackground = true)
 @Composable
-fun ItemDetailsScreenPreview() {
-    InventoryTheme {
-        ItemDetailsBody(ItemDetailsUiState(
-            outOfStock = true, itemDetails = ItemDetails(1,
-                "Pen",
-                "$100",
-                "10",
-                "Erich Krause",
-                "office@erichkrause.com",
-                "74952343795")
-        ), onSellItem = {}, onDelete = {})
+private fun Write(launcher: ManagedActivityResultLauncher<String, Uri?>) {
+    LaunchedEffect(Unit) {
+        launcher.launch("Item.txt")
     }
-}
-
-fun shareItemDetails(item: Item, context: Context) {
-    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_SUBJECT, "Item Details: ${item.name}")
-        putExtra(
-            Intent.EXTRA_TEXT,
-            """
-            Name: ${item.name}
-            Quantity: ${item.quantity}
-            Price: ${item.formatedPrice()}
-            Supplier: ${item.supplier}
-            Supplier's Email: ${item.email}
-            Supplier's Phone: ${item.phone}
-            """.trimIndent()
-        )
-    }
-    context.startActivity(Intent.createChooser(shareIntent, "Share item via"))
 }

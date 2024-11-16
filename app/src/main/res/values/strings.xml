@@ -46,4 +46,8 @@
     <string name="sell">Sell</string>
     <string name="yes">Yes</string>
     <string name="required_fields">*required fields</string>
+    <string name="settings_title">Settings</string>
+    <string name="upload_title">Upload Item</string>
+    <string name="save">Save</string>
+    <string name="creation">Creation</string>
 </resources>

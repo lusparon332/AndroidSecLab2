@@ -16,6 +16,7 @@
 
 package com.example.inventory
 
+import android.content.Context
 import androidx.compose.material.icons.Icons.Filled
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,11 +27,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.inventory.R.string
 import com.example.inventory.ui.navigation.InventoryNavHost
+import com.example.inventory.ui.settings.SettingsViewModel
+
+public var applicationContext: Context? = null
 
 /**
  * Top level composable that represents screens for the application.
@@ -38,6 +43,7 @@ import com.example.inventory.ui.navigation.InventoryNavHost
 @Composable
 fun InventoryApp(navController: NavHostController = rememberNavController()) {
     InventoryNavHost(navController = navController)
+    applicationContext = LocalContext.current
 }
 
 /**
@@ -50,7 +56,9 @@ fun InventoryTopAppBar(
     canNavigateBack: Boolean,
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
-    navigateUp: () -> Unit = {}
+    navigateUp: () -> Unit = {},
+    action: () -> Unit = {},
+    isHome: Boolean = false
 ) {
     CenterAlignedTopAppBar(
         title = { Text(title) },
@@ -65,6 +73,7 @@ fun InventoryTopAppBar(
                     )
                 }
             }
-        }
+        },
+        actions = { if(isHome) { IconButton(onClick = action) { Text(text = "⚙") } } }
     )
 }
